@@ -1,0 +1,177 @@
+@startuml
+hide empty members
+
+skinparam class {
+  BackgroundColor<<VO>> #D6EAF8
+  BackgroundColor<<AR>> #FDEBD0
+  BackgroundColor #FEF9E7
+  ArrowColor Black
+}
+skinparam packageBackgroundColor #EBF5FB
+skinparam packageBorderColor Black
+
+' ---------------- CORE CLASSES / VOs ----------------
+
+class StorageArea {
+  id
+  type
+  location
+  maxCapacity
+}
+
+package "Shipping Agents Aggregate" {
+  class ShippingAgentOrganization <<AR>> {
+    id
+    name
+  }
+
+  class Representative {
+    id
+    name
+  }
+
+  class Email <<VO>> {
+  }
+  class PhoneNumber <<VO>> {
+  }
+  class RepresentativeStatus <<VO>> {
+  }
+  class Address <<VO>> {
+  }
+  class TaxNumber <<VO>> {
+  }
+}
+
+class VesselVisitNotification <<AR>> {
+  id
+  status
+  decisionLog
+  vesselId
+  dockId
+}
+
+class CargoManifest {
+  id
+  containerList
+  vesselVisitNotificationId
+}
+
+class CrewMember {
+  id
+  name
+  nationality
+  vesselVisitNotificationId
+}
+
+package "Human Resources Aggregate" {
+  class StaffMember <<AR>> {
+    id
+    name
+  }
+}
+
+package "Resource Management Aggregate" {
+  class Resource <<AR>> {
+    id
+    name
+  }
+
+  class ResourceCode <<VO>> {
+  }
+  class OperationalCapacity <<VO>> {
+  }
+  class ResourceStatus <<VO>> {
+  }
+  class ResourceType <<VO>> {
+  }
+  class SetupTime <<VO>> {
+  }
+}
+
+package "Qualifications Aggregate" {
+  class Qualification <<AR>> {
+    id
+  }
+}
+
+package "Vessels Aggregate" {
+  class Vessel <<AR>> {
+    id
+  }
+  class VesselType {
+    id
+  }
+  class VesselDimensions <<VO>> {
+  }
+  class VesselIMO <<VO>> {
+  }
+}
+
+package "Dock Aggregate" {
+  class Dock <<AR>> {
+    id
+  }
+  class DockLocation <<VO>> {
+  }
+}
+
+' ---------------- LINKING AGGREGATES ----------------
+
+package "Operations Aggregate" {
+  class Assignment <<AR>> {
+    id
+    staffMemberId
+    resourceId
+    timeSlot
+  }
+}
+
+package "Training Aggregate" {
+  class Certification <<AR>> {
+    id
+    staffMemberId
+    qualificationId
+    validUntil
+  }
+}
+
+' ---------------- COMPOSIÇÕES (Value Objects) ----------------
+
+Representative *-- Email : has
+Representative *-- PhoneNumber : has
+Representative -- RepresentativeStatus : status
+ShippingAgentOrganization *-- Address : address
+ShippingAgentOrganization *-- TaxNumber : tax number
+
+Resource *-- ResourceCode : code
+Resource *-- ResourceType : type
+Resource *-- ResourceStatus : status
+Resource *-- OperationalCapacity : capacity
+Resource *-- SetupTime : setup time
+
+Vessel *-- VesselIMO : identified by
+VesselType *-- VesselDimensions : dimensions
+Dock *-- DockLocation : located at
+
+' ---------------- RELAÇÕES + MULTIPLICIDADES ----------------
+' Entre agregados, assume-se referência por ID.
+
+VesselType "1" -- "0..*" Vessel : classifies
+VesselType "0..*" -- "0..*" Dock : allowed at
+Dock "1" -- "0..*" StorageArea : serves
+
+ShippingAgentOrganization "1" -- "0..*" Representative : employs
+ShippingAgentOrganization "0..*" -- "0..*" Vessel : owns/operates
+
+VesselVisitNotification "1" -- "0..*" CargoManifest : includes
+VesselVisitNotification "1" -- "0..*" CrewMember : lists
+VesselVisitNotification "1" -- "1" Dock : assigned
+
+StaffMember "1" -- "0..*" Assignment : assignments
+Resource   "1" -- "0..*" Assignment : assignments
+
+StaffMember   "1" -- "0..*" Certification : certifications
+Qualification "1" -- "0..*" Certification : required
+
+@enduml
+
